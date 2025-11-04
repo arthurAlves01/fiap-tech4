@@ -1,0 +1,25 @@
+[project]
+name = "challenger-fase-4"
+version = "0.1.0"
+description = "Tech Challenger Fase 4 - Utilizar machine learning para prever se uma pessoa pode ter obesidade"
+authors = [
+    {name = "JacksonvBarbosa",email = "jacksonsventura@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas (>=2.3.3,<3.0.0)",
+    "seaborn (>=0.13.2,<0.14.0)",
+    "matplotlib (>=3.10.7,<4.0.0)",
+    "scikit-learn (>=1.7.2,<2.0.0)",
+    "numpy (>=2.3.4,<3.0.0)",
+    "xgboost (>=3.1.1,<4.0.0)",
+    "lightgbm (>=4.6.0,<5.0.0)",
+    "catboost (>=1.2.8,<2.0.0)",
+    "streamlit (>=1.51.0,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
