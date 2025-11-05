@@ -3,7 +3,7 @@ import joblib
 import pickle
 import numpy as np
 
-
+# carregamento do modelo
 def load_model(model_path: str):
     """Carrega modelo salvo (.joblib ou .pkl)."""
     if model_path.endswith(".joblib"):
@@ -15,7 +15,7 @@ def load_model(model_path: str):
         raise ValueError("Formato inválido. Use .joblib ou .pkl")
     return model
 
-
+# processamento de input
 def preprocess_input(input_dict: dict) -> pd.DataFrame:
     """
     Recebe um dicionário de dados brutos e já converte para DataFrame
@@ -49,11 +49,11 @@ def preprocess_input(input_dict: dict) -> pd.DataFrame:
     yes_no_cols = ['hist_familiar_obes', 'cons_altas_cal_freq', 'fuma', 'controle_calorias']
     for c in yes_no_cols:
         if c in df:
-            df[c] = df[c].map({'yes': 1, 'no': 0})
+            df[c] = df[c].map({'yes': 1, 'no': 0}).copy()
 
     # Sexo → 0/1
     if "sexo" in df:
-        df["sexo"] = df["sexo"].map({'Female': 0, 'Male': 1})
+        df["sexo"] = df["sexo"].map({'Female': 0, 'Male': 1}).copy()
 
     # Arredondamentos
     col_int = ['idade', 'cons_verduras', 'refeicoes_principais_dia', 'ativ_fisica', 'uso_tecnologia']
@@ -62,7 +62,7 @@ def preprocess_input(input_dict: dict) -> pd.DataFrame:
             df[c] = df[c].round(0)
 
     if "agua_dia" in df:
-        df["agua_dia"] = df["agua_dia"].round(0)
+        df["agua_dia"] = df["agua_dia"].round().astype(int)
 
     for c in ['altura', 'peso']:
         if c in df:

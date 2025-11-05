@@ -30,21 +30,12 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 
+# Função de treino
 def train_model(X, y, model: BaseEstimator, save_model=False, model_name="modelo", save_type="joblib"):
     """
     Treina um modelo de classificação usando Pipeline.
     Pode salvar opcionalmente em joblib ou pickle.
     """
-    # Models
-    from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-    from sklearn.svm import SVC
-    from sklearn.tree import DecisionTreeClassifier
-    from xgboost import XGBClassifier
-    from lightgbm import LGBMClassifier
-    from catboost import CatBoostClassifier
-    from sklearn.naive_bayes import GaussianNB
-    from sklearn.neighbors import KNeighborsClassifier
-    from sklearn.linear_model import LogisticRegression
 
     # Train/test split
     X_train, X_test, y_train, y_test = train_test_split(
