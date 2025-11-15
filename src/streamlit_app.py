@@ -1,6 +1,13 @@
 import streamlit as st
 from src.production_pipeline import load_model, predict_from_input
 from PIL import Image
+from pathlib import Path
+
+# Configurando root do projeto
+BASE_DIR = Path(__file__).resolve().parent.parent  # sobe dois níveis até o root do projeto
+
+xgb_model_path = BASE_DIR / "notebook" / "xgb_model.joblib"
+
 
 # ================================
 # 📌 CONFIGURAÇÕES DE PÁGINA
@@ -40,7 +47,7 @@ st.markdown(
 # 📌 Carregar modelo
 # ================================
 model = load_model(
-    r"G:\FIAP-Pos-data-analytics\Pos_Data_Analytics_Curso\Challenges_Fases\Challenger_Fase_4\notebook\xgb_model.joblib"
+    xgb_model_path
 )
 
 st.write("---")

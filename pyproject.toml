@@ -5,6 +5,11 @@ description = "Tech Challenger Fase 4 - Utilizar machine learning para prever se
 authors = [
     {name = "JacksonvBarbosa",email = "jacksonsventura@gmail.com"}
 ]
+
+packages = [
+    { include = "src" }
+]
+
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -23,7 +28,9 @@ dependencies = [
     "dotenv (>=0.9.9,<0.10.0)"
 ]
 
-
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+app = "src.utils.run_streamlit:run"

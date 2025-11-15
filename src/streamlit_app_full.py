@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timezone
 #import datetime
 from src.production_pipeline import predict_from_input, load_model
+from pathlib import Path
 
 # -----------------------------
 # CONFIG
@@ -43,6 +44,13 @@ BG_LIGHT = "#FFFFFF"
 BG_DARK = "#0F1722"
 TEXT_LIGHT = "#0B1B2B"
 TEXT_DARK = "#E6EEF2"
+
+# -----------------------------
+# Configurando root do projeto
+# -----------------------------
+BASE_DIR = Path(__file__).resolve().parent.parent  # sobe dois níveis até o root do projeto
+
+xgb_model_path = str(BASE_DIR / "notebook" / "xgb_model.joblib")
 
 # -----------------------------
 # Conexão com Postgres
@@ -555,7 +563,7 @@ def main():
     )
 
     model = load_model(
-        r"E:\Pos_Tech_FIAP\Challegenger\Challenger_fase_4\fiap-tech4\notebook\xgb_model.joblib"
+        xgb_model_path
         #r"G:\FIAP-Pos-data-analytics\Pos_Data_Analytics_Curso\Challenges_Fases\Challenger_Fase_4\notebook\random_forest_final.joblib"
     )
 
