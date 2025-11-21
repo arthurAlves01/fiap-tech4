@@ -4,15 +4,20 @@
 
 ## Prerequisites
 
+1. Python 3.13.17
+2. `poetry` or `streamlit`
+
+## Running app
+
 ### With streamlit
 
-1. Python 3.13.17
-2. Run `pip install -r requirements.txt`
-3. Run `streamlit run src\streamlit_app_full.py`
+2. `pip install -r requirements.txt`
+3. `streamlit run src\streamlit_app_full.py`
 
 ### With poetry
-1. Run `poetry install`
-2. Run `poetry run app`
+
+1. `poetry install`
+2. `poetry run app`
 
 ## Data sources
 
