@@ -55,7 +55,6 @@ TEXT_LIGHT = "#0B1B2B"
 TEXT_DARK = "#E6EEF2"
 st.session_state.model = load_model(
     xgb_model_path
-    #r"G:\FIAP-Pos-data-analytics\Pos_Data_Analytics_Curso\Challenges_Fases\Challenger_Fase_4\notebook\random_forest_final.joblib"
 )
 
 st.session_state.FIELD_MAPPING = {
