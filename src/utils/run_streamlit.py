@@ -5,7 +5,7 @@ import os
 
 load_dotenv()
 
-app = os.getenv("APP_PATH")
+app = "src/streamlit_app_full.py"
 
 def run():
     sys.argv = ["streamlit", "run", app]
