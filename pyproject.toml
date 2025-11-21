@@ -6,10 +6,6 @@ authors = [
     {name = "JacksonvBarbosa",email = "jacksonsventura@gmail.com"}
 ]
 
-packages = [
-    { include = "src" }
-]
-
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
