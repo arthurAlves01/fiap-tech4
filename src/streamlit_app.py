@@ -1,5 +1,5 @@
 import streamlit as st
-from src.production_pipeline import load_model, predict_from_input
+from models.production_pipeline import load_model, predict_from_input
 from PIL import Image
 from pathlib import Path
 
