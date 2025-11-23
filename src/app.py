@@ -380,6 +380,7 @@ def main():
 
     pages = [
         st.Page("pages/Home.py", title="Home", icon=":material/home:"),
+        st.Page("pages/Dashboard.py", title="EDA", icon=":material/analytics:"),
         st.Page("pages/Historico.py", title="Histórico", icon=":material/history:"),
         st.Page("pages/Prever.py", title="Prever", icon=":material/search:"),
         st.Page("pages/Sobre.py", title="Sobre", icon=":material/info:")
