@@ -1,8 +1,8 @@
 import streamlit as st
 from src.models.production_pipeline import predict_from_input, load_model
-import utils.utils as utils
-import utils.plots as plots
-import utils.connection as connection
+import shared.utils as utils
+import shared.plots as plots
+import shared.connection as connection
 import base64
 import re
 

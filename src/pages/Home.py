@@ -1,5 +1,5 @@
 import streamlit as st
-import utils.utils as utils
+import shared.utils as utils
 
 def render_home():
     st.image(utils.create_logo())

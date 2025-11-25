@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
 import streamlit as st
-from utils.paths import DATA_DIR
+from shared.paths import DATA_DIR
 
 st.set_page_config(page_title="Dashboard de Obesidade", layout="wide")
 
