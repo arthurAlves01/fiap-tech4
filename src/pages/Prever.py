@@ -90,7 +90,7 @@ def render_predict(load_model_fn=None, predict_fn=None):
         # salvar no DB se usuário autenticado (médico) ou se paciente quiser
         user_type = st.session_state.get('user_type', 'anon')
         user_name = st.session_state.get('user_name', 'anon')
-        connection.save_record(user_type, user_name, inputs, mensagem, prob)
+        connection.save_record(user_type, user_name, inputs, mensagem, prob, st.session_state.DB_PATH)
         st.info('Registro salvo no histórico.')
 
         # gerar PDF

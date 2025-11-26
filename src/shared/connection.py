@@ -6,9 +6,8 @@ import streamlit as st
 # UTIL: inicializar DB
 # -----------------------------
 
-
 # Criar tabela se não existir no sqlite
-def init_db(path=st.session_state.DB_PATH):
+def init_db(path):
     conn = sqlite3.connect(path)
     c = conn.cursor()
     c.execute(
@@ -27,7 +26,7 @@ def init_db(path=st.session_state.DB_PATH):
     conn.commit()
     conn.close()
 
-def save_record(user_type, user_name, inputs, mensagem, probabilidade, path=st.session_state.DB_PATH):
+def save_record(user_type, user_name, inputs, mensagem, probabilidade, path):
     timestamp_utc = datetime.now(timezone.utc).isoformat()
 
     conn = sqlite3.connect(path)
