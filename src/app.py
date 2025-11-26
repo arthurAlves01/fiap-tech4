@@ -38,7 +38,7 @@ xgb_model_path = str(BASE_DIR / "src" / "models" / "xgb_model.joblib")
 # -----------------------------
 # CONFIG
 # -----------------------------
-st.session_state.DB_PATH = "data/patients.db"
+st.session_state.DB_PATH = BASE_DIR / "data" / "patients.db"
 st.session_state.LOGO_PATH = "assets/images/logo.png"
 st.session_state.FONT_PATH = "assets/fonts/DejaVuSans.ttf"
 st.session_state.nome_hospital = "Hospital TechSaúde"
@@ -246,7 +246,7 @@ def main():
     pg = st.navigation(pages)
     pg.run()
 
-    init_db()
+    init_db(st.session_state.DB_PATH)
 
 if __name__ == '__main__':
     main()
