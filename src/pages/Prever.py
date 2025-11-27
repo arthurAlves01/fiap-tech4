@@ -80,7 +80,10 @@ def render_predict(load_model_fn=None, predict_fn=None):
         # ✅ Exibe na interface
         st.success(mensagem)
         st.metric("Probabilidade (%)", f"{prob:.2f}%")
-        st.pyplot(plots.render_risk_chart(prob))
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.pyplot(plots.render_risk_chart(prob))
 
         st.subheader('Recomendações nutricionais')
         recs = utils.recommend_nutrition_profile(inputs)

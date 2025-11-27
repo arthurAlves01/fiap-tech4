@@ -232,6 +232,8 @@ def main():
         layout='wide'
     )
 
+    auth_widget()
+
     if 'theme_dark' not in st.session_state:
         st.session_state['theme_dark'] = False
 
@@ -240,7 +242,7 @@ def main():
         st.Page("pages/Prever.py", title="Prever", icon=":material/search:"),
         st.Page("pages/Historico.py", title="Histórico", icon=":material/history:"),
         st.Page("pages/Dashboard.py", title="EDA", icon=":material/analytics:"),
-        st.Page("pages/Sobre.py", title="Sobre", icon=":material/info:")
+        st.Page("pages/Sobre.py", title="Sobre", icon=":material/info:")        
     ]
 
     pg = st.navigation(pages)
