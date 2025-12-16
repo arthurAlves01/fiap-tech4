@@ -2,9 +2,13 @@ import streamlit as st
 import sqlite3
 import base64
 
-def render_history():
+# Inicializa variáveis de configuração se não existirem
+if "DB_PATH" not in st.session_state:
+    st.session_state["DB_PATH"] = "records.db"
+
+def render_historico():
     st.header('Histórico de avaliações')
-    conn = sqlite3.connect(st.session_state.DB_PATH)
+    conn = sqlite3.connect(st.session_state.get("DB_PATH", "records.db"))
     c = conn.cursor()
     c.execute('SELECT id, timestamp, user_type, user_name, mensagem, probabilidade FROM records ORDER BY id DESC LIMIT 200')
     rows = c.fetchall()
@@ -22,4 +26,5 @@ def render_history():
     href = f'<a href="data:file/csv;base64,{b64}" download="historico.csv">⬇️ Baixar histórico (CSV)</a>'
     st.markdown(href, unsafe_allow_html=True)
 
-render_history()
+if __name__ == '__main__':
+    render_historico()

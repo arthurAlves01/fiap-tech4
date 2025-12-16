@@ -1,3 +1,15 @@
+import os
+import sys
+
+# Tenta importar o pacote `src`; se falhar, adiciona o root do repo ao `sys.path` e tenta novamente.
+try:
+    from src.models.production_pipeline import load_model, preprocess_input
+except ModuleNotFoundError:
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    if repo_root not in sys.path:
+        sys.path.insert(0, repo_root)
+    from src.models.production_pipeline import load_model, preprocess_input
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -5,7 +17,9 @@ import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+import glob
 from datetime import datetime
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 # ============================================================
 # CONFIGURAÇÃO DA PÁGINA
@@ -16,6 +30,23 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Ensure database and asset defaults exist in session_state
+try:
+    from utils.connection import init_db
+    from utils.paths import DB_PATH, LOGO_PATH, FONT_PATH
+    if "DB_PATH" not in st.session_state:
+        st.session_state["DB_PATH"] = str(DB_PATH)
+    if "LOGO_PATH" not in st.session_state:
+        st.session_state["LOGO_PATH"] = str(LOGO_PATH)
+    if "FONT_PATH" not in st.session_state:
+        st.session_state["FONT_PATH"] = str(FONT_PATH)
+
+    # Initialize DB schema on app startup
+    init_db(st.session_state.get("DB_PATH"))
+except Exception:
+    # Non-fatal: continue without blocking UI if init fails
+    pass
 
 # ============================================================
 # CSS PERSONALIZADO PARA MELHOR APRESENTAÇÃO
@@ -69,7 +100,7 @@ st.sidebar.markdown("---")
 @st.cache_data
 def load_and_prepare_data():
     """Carrega e prepara os dados com cache para melhor performance"""
-    df = pd.read_csv("Obesity.csv")
+    df = pd.read_csv("data\Obesity.csv")
     
     # Dicionário de renomeação para português
     column_name = {
@@ -299,7 +330,7 @@ if "nivel_obesidade" in df_filtrado.columns:
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)'
     )
-    st.plotly_chart(fig_obesidade, use_container_width=True)
+    st.plotly_chart(fig_obesidade, width='stretch')
     
     # Insight
     categoria_maior = df_obesidade.loc[df_obesidade['contagem'].idxmax(), 'nivel_obesidade']
@@ -337,7 +368,7 @@ with col1:
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)'
     )
-    st.plotly_chart(fig_sexo, use_container_width=True)
+    st.plotly_chart(fig_sexo, width='stretch')
 
 with col2:
     if "nivel_obesidade" in df_filtrado.columns:
@@ -355,7 +386,7 @@ with col2:
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)'
         )
-        st.plotly_chart(fig_sexo_obesidade, use_container_width=True)
+        st.plotly_chart(fig_sexo_obesidade, width='stretch')
 
 # Insight
 if "nivel_obesidade" in df_filtrado.columns:
@@ -396,7 +427,7 @@ fig_idade.update_layout(
     plot_bgcolor='rgba(0,0,0,0)',
     paper_bgcolor='rgba(0,0,0,0)'
 )
-st.plotly_chart(fig_idade, use_container_width=True)
+st.plotly_chart(fig_idade, width='stretch')
 
 # Insight
 if "nivel_obesidade" in df_filtrado.columns:
@@ -440,7 +471,7 @@ if "hist_familiar_obes" in df_filtrado.columns:
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)'
     )
-    st.plotly_chart(fig_familia, use_container_width=True)
+    st.plotly_chart(fig_familia, width='stretch')
     
     # Insight
     familia_obesidade = df_filtrado[df_filtrado['hist_familiar_obes'] == 'Sim']
@@ -484,7 +515,7 @@ with col1:
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)'
         )
-        st.plotly_chart(fig_transporte, use_container_width=True)
+        st.plotly_chart(fig_transporte, width='stretch')
 
 with col2:
     if "fuma" in df_filtrado.columns:
@@ -502,7 +533,7 @@ with col2:
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)'
         )
-        st.plotly_chart(fig_fuma, use_container_width=True)
+        st.plotly_chart(fig_fuma, width='stretch')
 
 col1, col2 = st.columns(2)
 
@@ -522,7 +553,7 @@ with col1:
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)'
         )
-        st.plotly_chart(fig_lancha, use_container_width=True)
+        st.plotly_chart(fig_lancha, width='stretch')
 
 with col2:
     if "controle_calorias" in df_filtrado.columns:
@@ -540,7 +571,7 @@ with col2:
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)'
         )
-        st.plotly_chart(fig_controle, use_container_width=True)
+        st.plotly_chart(fig_controle, width='stretch')
 
 # Insights combinados
 insights_habitos = []
@@ -618,6 +649,65 @@ else:
     st.info("⚠️ Poucas variáveis numéricas disponíveis após aplicar os filtros para análise de correlação.")
 
 # ============================================================
+# MÉTRICAS DOS MODELOS PREDITIVOS
+# ============================================================
+st.markdown("---")
+st.header("📈 Métricas dos Modelos Preditivos")
+st.markdown("**Objetivo:** Exibir acurácia e métricas principais dos modelos salvos (avaliação rápida sobre a base disponível).")
+
+try:
+
+    models_dir = os.path.join("src", "models")
+    model_files = glob.glob(os.path.join(models_dir, "*.joblib"))
+
+    if len(model_files) == 0:
+        st.info("Nenhum modelo .joblib encontrado em `src/models`.")
+    else:
+        # Carregar base crua (mesmo CSV usado no treino) para avaliar rapidamente
+        df_raw = pd.read_csv(r"data\Obesity.csv")
+        # Criar rótulo binário: 1 = alguma classe de Obesidade, 0 caso contrário
+        df_raw['target_bin'] = df_raw['Obesity'].str.contains('Obesity', case=False, na=False).astype(int)
+
+        results = []
+        for mf in model_files:
+            nome_modelo = os.path.basename(mf)
+            try:
+                model = load_model(mf)
+
+                # Preprocessar cada linha com a função de produção (mesma lógica usada na predição)
+                X_rows = []
+                for _, row in df_raw.iterrows():
+                    inp = row.to_dict()
+                    Xp = preprocess_input(inp)
+                    X_rows.append(Xp.iloc[0])
+
+                X = pd.DataFrame(X_rows)
+                y = df_raw['target_bin']
+
+                # Rodar predição e calcular métricas
+                y_pred = model.predict(X)
+                acc = accuracy_score(y, y_pred)
+                f1 = f1_score(y, y_pred, zero_division=0)
+                prec = precision_score(y, y_pred, zero_division=0)
+                rec = recall_score(y, y_pred, zero_division=0)
+
+                results.append({
+                    'modelo': nome_modelo,
+                    'accuracy': f"{acc:.3f}",
+                    'f1_score': f"{f1:.3f}",
+                    'precision': f"{prec:.3f}",
+                    'recall': f"{rec:.3f}"
+                })
+            except Exception as e:
+                results.append({'modelo': nome_modelo, 'accuracy': 'erro', 'f1_score': 'erro', 'precision': 'erro', 'recall': str(e)})
+
+        df_metrics = pd.DataFrame(results)
+        st.table(df_metrics)
+
+except Exception as e:
+    st.warning(f"Não foi possível calcular métricas dos modelos: {e}")
+
+# ============================================================
 # DADOS COMPLETOS
 # ============================================================
 st.markdown("---")
@@ -626,7 +716,7 @@ st.header("📋 Base de Dados Completa")
 with st.expander("🔍 Visualizar Tabela Completa de Dados Filtrados", expanded=False):
     st.dataframe(
         df_filtrado,
-        use_container_width=True,
+        width='stretch',
         height=400
     )
     st.caption(f"Total de registros: {len(df_filtrado):,} | Total de colunas: {len(df_filtrado.columns)}")
