@@ -1,5 +1,7 @@
-# Libs
+"""Utilitários de validação (validação cruzada)."""
 import warnings
+from typing import Any, Dict
+import pandas as pd
 from sklearn.model_selection import cross_val_score, StratifiedKFold, KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.compose import ColumnTransformer
@@ -7,7 +9,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 
 # Função de Validação Cruzada
-def cross_validate_model(X, y, model, cv=5, stratified=True):
+def cross_validate_model(X: pd.DataFrame, y: pd.Series, model: Any, cv: int = 5, stratified: bool = True) -> Dict[str, Any]:
+    """Executa validação cruzada usando um pipeline de pré-processamento padrão e retorna pontuações por métrica."""
 
     if stratified:
         kf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=42)

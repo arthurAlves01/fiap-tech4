@@ -1,12 +1,16 @@
+"""Página de histórico: exibe e exporta registros salvos no SQLite."""
 import streamlit as st
 import sqlite3
 import base64
+from typing import Optional
 
 # Inicializa variáveis de configuração se não existirem
 if "DB_PATH" not in st.session_state:
     st.session_state["DB_PATH"] = "records.db"
 
-def render_historico():
+
+def render_historico() -> None:
+    """Renderiza o histórico de avaliações e permite exportar como CSV."""
     st.header('Histórico de avaliações')
     conn = sqlite3.connect(st.session_state.get("DB_PATH", "records.db"))
     c = conn.cursor()

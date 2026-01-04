@@ -10,9 +10,11 @@ from PIL import Image, ImageDraw, ImageFont
 
 @st.cache_resource
 def load_ml_model(model_path: str):
-    """Load an ML model from disk with caching and safe fallbacks.
+    """Carrega um modelo de ML do disco com cache e tratativas seguras.
 
-    Supports `.joblib` and `.pkl`. Returns None on failure and logs a Streamlit warning.
+    Suporta `.joblib` e `.pkl`. Retorna `None` em caso de falha e registra um aviso no Streamlit.
+    É um helper de conveniência para uso com Streamlit; comporta-se de forma semelhante a
+    `src.models.production_pipeline.load_model`, mas retorna `None` em vez de lançar exceções.
     """
     try:
         if model_path.endswith(".joblib"):
@@ -33,11 +35,11 @@ def load_ml_model(model_path: str):
 
 
 def clean_ascii(text: Any) -> str:
-    """Return a Latin-1-safe string suitable for non-Unicode FPDF fonts.
+    """Retorna uma string compatível com Latin-1 adequada para fontes FPDF sem suporte a Unicode.
 
-    - Replaces common Unicode punctuation with ASCII equivalents.
-    - Removes any remaining non-printable characters but keeps Latin-1 accented characters.
-    - Ensures non-empty result.
+    - Substitui pontuação Unicode comum por equivalentes ASCII.
+    - Remove caracteres não imprimíveis, preservando caracteres acentuados em Latin-1.
+    - Garante que o resultado não fique vazio.
     """
     if text is None:
         return "-"
@@ -46,9 +48,13 @@ def clean_ascii(text: Any) -> str:
             text = str(text)
         except Exception:
             return "-"
-    # Replace some unicode punctuation
+    # Replace some unicode punctuation and smart quotes
     text = text.replace("—", "-").replace("–", "-")
-    text = text.replace(""", '"').replace(""", '"').replace("'", "'")
+    # replace smart/open/close quotes with plain ASCII equivalents
+    text = (text.replace("“", '"')
+                .replace("”", '"')
+                .replace("‘", "'")
+                .replace("’", "'"))
     # Remove non-printable characters but preserve Latin-1 characters (accented letters)
     text = re.sub(r"[^\x20-\xFF]", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
@@ -56,9 +62,9 @@ def clean_ascii(text: Any) -> str:
 
 
 def _find_system_font(preferred: str | None = None) -> str | None:
-    """Try to locate a system TrueType font that supports Unicode (e.g. DejaVu/Arial).
+    """Tenta localizar uma fonte TrueType do sistema que suporte Unicode (ex.: DejaVu/Arial).
 
-    Searches common system font paths and returns the first found TTF path or None.
+    Pesquisa em caminhos comuns de fontes e retorna o primeiro caminho TTF encontrado ou `None`.
     """
     if preferred and os.path.exists(preferred):
         return preferred
@@ -116,13 +122,13 @@ def _find_system_font(preferred: str | None = None) -> str | None:
 
 
 def _safe_multi_cell(pdf: FPDF, w: float, h: float, txt: str, min_font_size: int = 6) -> None:
-    """Safely write `txt` using `multi_cell`, handling FPDF width/font issues.
+    """Escreve `txt` com segurança usando `multi_cell`, tratando problemas de largura/fonte do FPDF.
 
-    Strategy:
-    - Try to write normally.
-    - If FPDF raises an exception about width, reduce font size stepwise and retry.
-    - If it still fails, set small left/right margins and retry once.
-    - As a last resort, write a single dash '-' so PDF generation doesn't fail.
+    Estratégia:
+    - Tenta escrever normalmente.
+    - Se o FPDF levantar exceção por largura, reduz o tamanho da fonte gradualmente e tenta novamente.
+    - Se ainda falhar, reduz as margens esquerda/direita e tenta mais uma vez.
+    - Como último recurso, escreve um traço '-' para evitar falha na geração do PDF.
     """
     if not isinstance(txt, str):
         txt = str(txt)
@@ -159,7 +165,7 @@ def _safe_multi_cell(pdf: FPDF, w: float, h: float, txt: str, min_font_size: int
 
 
 class PDFReport(FPDF):
-    """Custom PDF report class with header/footer and font handling."""
+    """Classe de relatório PDF customizada com cabeçalho/rodapé e tratamento de fontes."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -175,7 +181,7 @@ class PDFReport(FPDF):
                 self.font_registered = False
 
     def header(self):
-        """Add header with logo and hospital name."""
+        """Adiciona cabeçalho com logo e nome do hospital."""
         logo_path = st.session_state.get("LOGO_PATH", "logo.png")
         hospital_name = st.session_state.get("HOSPITAL_NAME", "Hospital Padrão")
         # Header background rectangle: use a light background to keep logo visible
@@ -221,7 +227,7 @@ class PDFReport(FPDF):
         self.ln(18)
 
     def footer(self) -> None:
-        """Add footer with signature lines."""
+        """Adiciona rodapé com linhas para assinatura."""
         try:
             self.set_y(-35)
             if self.font_registered:
@@ -252,10 +258,10 @@ class PDFReport(FPDF):
 
 
 def generate_pdf(patient_name: str, inputs: Dict[str, Any], mensagem: str, probabilidade: float) -> bytes:
-    """Generate a PDF report and return bytes.
+    """Gera um relatório em PDF e retorna os bytes.
 
-    - Uses `DejaVu` Unicode font if available (register via `st.session_state['FONT_PATH']`).
-    - Falls back to ASCII-safe text when necessary.
+    - Usa a fonte Unicode `DejaVu` se disponível (registre via `st.session_state['FONT_PATH']`).
+    - Caso contrário, utiliza texto compatível com ASCII/Latin-1.
     """
     pdf = PDFReport()
     # Choose base font
@@ -478,7 +484,7 @@ def generate_pdf(patient_name: str, inputs: Dict[str, Any], mensagem: str, proba
 
 
 def recommend_nutrition_profile(inputs: Dict[str, Any]) -> list:
-    """Provide simple nutrition recommendations based on input values."""
+    """Fornece recomendações nutricionais simples com base nos valores de entrada."""
     recs = []
     if inputs.get("FAVC") == "yes":
         recs.append("Reduzir alimentos de alta caloria; priorizar fontes proteicas magras e fibras.")
@@ -496,9 +502,9 @@ def recommend_nutrition_profile(inputs: Dict[str, Any]) -> list:
 
 
 def create_logo(path: str | None = None, hospital: str | None = None) -> str:
-    """Create a simple logo image if `path` doesn't exist and return the path.
+    """Cria uma imagem de logo simples se `path` não existir e retorna o caminho.
 
-    Uses session_state defaults when arguments are not provided.
+    Utiliza valores padrões de `st.session_state` quando os argumentos não são fornecidos.
     """
     if path is None:
         path = st.session_state.get("LOGO_PATH", "logo.png")

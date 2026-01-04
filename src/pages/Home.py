@@ -1,3 +1,4 @@
+"""Página Home do app: apresentação e instruções rápidas."""
 import streamlit as st
 import utils.utils as utils
 
@@ -5,7 +6,9 @@ import utils.utils as utils
 if "HOSPITAL_NAME" not in st.session_state:
     st.session_state["HOSPITAL_NAME"] = "Hospital Padrão"
 
-def render_home():
+
+def render_home() -> None:
+    """Renderiza a página inicial do app (logo, título e instruções)."""
     st.image(utils.create_logo())
     st.title('Bem-vindo ao Sistema de Avaliação Preventiva')
     st.markdown(

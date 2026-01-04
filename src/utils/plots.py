@@ -1,6 +1,9 @@
+"""Helpers de plot usados pela aplicação Streamlit (gráficos de risco)."""
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
-def render_risk_chart(prob):
+def render_risk_chart(prob: float) -> Figure:
+    """Retorna uma figura de barra horizontal mostrando a probabilidade (0-100)."""
     fig, ax = plt.subplots(figsize=(6, 2))
     ax.barh([0], [prob], height=0.6)
     ax.set_xlim(0, 100)

@@ -1,3 +1,10 @@
+"""Dashboard Streamlit para visualização e avaliação de modelos de obesidade.
+
+Este módulo contém a UI principal, utilitários de visualização, e um
+pequeno trecho para avaliar métricas dos modelos salvos. As mudanças aqui
+são organizacionais (docstring, comentários) e não alteram o comportamento
+existente do dashboard.
+"""
 import os
 import sys
 

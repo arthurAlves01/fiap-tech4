@@ -1,52 +1,74 @@
-# Libs
-import pickle
+"""Utilitários de treinamento para experimentos de classificação.
 
-from sklearn.model_selection import (
-    train_test_split,
-    cross_val_score,
-    StratifiedKFold,
-    KFold
-)
+Este módulo contém uma função de treinamento simples e transparente que usa
+ColumnTransformer + Pipeline e exibe métricas básicas de teste. As alterações
+são puramente organizacionais (tipagem, helper para salvar modelos) e não
+alteram o comportamento de treino nem os parâmetros padrão.
+"""
+
+from typing import Tuple
+import pickle
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
-    accuracy_score, f1_score, recall_score,
-    precision_score, confusion_matrix, classification_report
+    accuracy_score, f1_score, recall_score, precision_score,
+    confusion_matrix, classification_report
 )
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.base import BaseEstimator
-from joblib import dump, load
+from joblib import dump
 
-# Modelos de classificação
-# Models
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
-from xgboost import XGBClassifier
-from lightgbm import LGBMClassifier
-from catboost import CatBoostClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.linear_model import LogisticRegression
+# Model imports left in place for convenience in notebooks (exported for easy access)  # noqa: F401
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier  # noqa: F401
+from sklearn.svm import SVC  # noqa: F401
+from sklearn.tree import DecisionTreeClassifier  # noqa: F401
+from xgboost import XGBClassifier  # noqa: F401
+from lightgbm import LGBMClassifier  # noqa: F401
+from catboost import CatBoostClassifier  # noqa: F401
+from sklearn.naive_bayes import GaussianNB  # noqa: F401
+from sklearn.neighbors import KNeighborsClassifier  # noqa: F401
+from sklearn.linear_model import LogisticRegression  # noqa: F401
 
-# Função de treino
-def train_model(X, y, model: BaseEstimator, save_model=False, model_name="modelo", save_type="joblib"):
+
+def _save_model(clf: Pipeline, model_name: str, save_type: str) -> None:
+    """Salva o pipeline em disco usando joblib ou pickle (não faz nada se o tipo for inválido)."""
+    if save_type == "joblib":
+        dump(clf, f"{model_name}.joblib")
+        print(f"\n✅ Modelo salvo em: {model_name}.joblib")
+    else:
+        with open(f"{model_name}.pkl", 'wb') as f:
+            pickle.dump(clf, f)
+        print(f"\n✅ Modelo salvo em: {model_name}.pkl")
+
+
+def train_model(
+    X: pd.DataFrame,
+    y: pd.Series,
+    model: BaseEstimator,
+    save_model: bool = False,
+    model_name: str = "modelo",
+    save_type: str = "joblib"
+) -> Tuple[Pipeline, dict, Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]]:
+    """Treina um modelo de classificação usando um pipeline de pré-processamento padrão.
+
+    Retorna o pipeline ajustado, um dicionário com métricas de teste e os
+    splits de treino/teste (X_train, X_test, y_train, y_test).
+
+    Observação: o comportamento padrão (test_size, random_state, stratify) é preservado
+    da implementação original para garantir resultados idênticos.
     """
-    Treina um modelo de classificação usando Pipeline.
-    Pode salvar opcionalmente em joblib ou pickle.
-    """
 
-    # Train/test split
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.3, random_state=42, stratify=y
     )
 
-    # Detectando colunas numéricas e categóricas
     numeric_features = X.select_dtypes(include=['int64', 'float64']).columns
     categorical_features = X.select_dtypes(include=['object', 'category']).columns
 
-    # Pré-processamento
     numeric_transformer = Pipeline(steps=[
         ("imputer", SimpleImputer(strategy="median")),
         ("scaler", StandardScaler())
@@ -63,19 +85,15 @@ def train_model(X, y, model: BaseEstimator, save_model=False, model_name="modelo
         ]
     )
 
-    # Pipeline final
     clf = Pipeline(steps=[
         ("preprocessor", preprocessor),
         ("model", model)
     ])
 
-    # Treino
     clf.fit(X_train, y_train)
 
-    # Predição
     y_pred = clf.predict(X_test)
 
-    # Métricas
     metrics = {
         "accuracy": accuracy_score(y_test, y_pred),
         "f1_score": f1_score(y_test, y_pred, average="weighted"),
@@ -93,14 +111,7 @@ def train_model(X, y, model: BaseEstimator, save_model=False, model_name="modelo
     print("\nConfusion Matrix:\n", metrics["confusion_matrix"])
     print("\nClassification Report:\n", metrics["classification_report"])
 
-    # Salvar modelo
     if save_model:
-        if save_type == "joblib":
-            dump(clf, f"{model_name}.joblib")
-            print(f"\n✅ Modelo salvo em: {model_name}.joblib")
-        else:
-            with open(f"{model_name}.pkl", 'wb') as f:
-                pickle.dump(clf, f)
-            print(f"\n✅ Modelo salvo em: {model_name}.pkl")
+        _save_model(clf, model_name, save_type)
 
     return clf, metrics, (X_train, X_test, y_train, y_test)

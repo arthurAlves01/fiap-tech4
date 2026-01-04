@@ -1,11 +1,13 @@
+"""Helpers de banco de dados para armazenar registros de predição (SQLite)."""
 from datetime import datetime, timezone
 import sqlite3
 import streamlit as st
 import os
+from typing import Optional
 
 
 def init_db(db_path: str) -> None:
-    """Initialize the database and create the records table if it doesn't exist."""
+    """Inicializa o banco de dados e cria a tabela `records` se ela não existir."""
     try:
         os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
         conn = sqlite3.connect(db_path)
@@ -27,7 +29,8 @@ def init_db(db_path: str) -> None:
         st.warning(f"Erro ao inicializar DB: {e}")
 
 
-def save_record(user_type, user_name, inputs, mensagem, probabilidade, path=None):
+def save_record(user_type: str, user_name: str, inputs: dict, mensagem: str, probabilidade: float, path: Optional[str] = None) -> None:
+    """Persiste um registro de predição no DB SQLite (não faz nada em caso de falha)."""
     # Inicializar caminho padrão do banco se não fornecido
     if path is None:
         path = st.session_state.get("DB_PATH", "records.db")

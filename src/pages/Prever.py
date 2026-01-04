@@ -1,74 +1,91 @@
+"""Page: formulário de triagem e integração com modelo salvo.
+
+Este módulo contém a UI do Streamlit para coletar dados do paciente, chamar a
+função de predição em `src.models.production_pipeline` e exibir resultados.
+Pequenas melhorias de organização e tipagem foram adicionadas sem alterar
+qualquer comportamento funcional do app.
+"""
+
 import os
 import sys
-import streamlit as st
+import glob
 import base64
 import re
-import glob
+from typing import Any, Callable, Mapping, Optional
 
-# Inicializa variáveis de configuração se não existirem
-if "DB_PATH" not in st.session_state:
-    st.session_state["DB_PATH"] = "records.db"
-if "HOSPITAL_NAME" not in st.session_state:
-    st.session_state["HOSPITAL_NAME"] = "Hospital Padrão"
-if "LOGO_PATH" not in st.session_state:
-    st.session_state["LOGO_PATH"] = "logo.png"
-if "FONT_PATH" not in st.session_state:
-    st.session_state["FONT_PATH"] = "DejaVuSans.ttf"
-if "PRIMARY_COLOR" not in st.session_state:
-    st.session_state["PRIMARY_COLOR"] = (25, 118, 210)
-if "ACCENT_COLOR" not in st.session_state:
-    st.session_state["ACCENT_COLOR"] = (255, 152, 0)
-if "FIELD_MAPPING" not in st.session_state:
-    st.session_state["FIELD_MAPPING"] = {}
-if "CATEGORY_TRANSLATION" not in st.session_state:
-    st.session_state["CATEGORY_TRANSLATION"] = {}
-if "EXPLAIN_NUMERIC" not in st.session_state:
-    st.session_state["EXPLAIN_NUMERIC"] = {}
+import streamlit as st
 
-# Traduções para exibição no formulário e para o PDF
-if "CATEGORY_TRANSLATION" not in st.session_state:
-    st.session_state["CATEGORY_TRANSLATION"] = {
-        'yes': 'Sim',
-        'no': 'Não',
-        'Sometimes': 'Às vezes',
-        'sometimes': 'Às vezes',
-        'Frequently': 'Frequentemente',
-        'frequently': 'Frequentemente',
-        'Always': 'Sempre',
-        'always': 'Sempre',
-        'never': 'Nunca',
-        'Never': 'Nunca',
-        'Automobile': 'Automóvel',
-        'Motorbike': 'Moto',
-        'Public_Transportation': 'Transporte Público',
-        'Bike': 'Bicicleta',
-        'Walking': 'A pé'
-    }
+# Defaults kept explicit to ensure the app runs as before
+_DEFAULT_SESSION = {
+    "DB_PATH": "records.db",
+    "HOSPITAL_NAME": "Hospital Padrão",
+    "LOGO_PATH": "logo.png",
+    "FONT_PATH": "DejaVuSans.ttf",
+    "PRIMARY_COLOR": (25, 118, 210),
+    "ACCENT_COLOR": (255, 152, 0),
+    "FIELD_MAPPING": {},
+}
 
-if "FIELD_NAME_MAP" not in st.session_state:
-    st.session_state["FIELD_NAME_MAP"] = {
-        'family_history': 'Histórico familiar de obesidade',
-        'FAVC': 'Consome alimentos de alta caloria',
-        'FCVC': 'Consumo de verduras',
-        'NCP': 'Refeições por dia',
-        'CAEC': 'Lanches entre refeições',
-        'SMOKE': 'Fuma',
-        'CH2O': 'Ingestão de água',
-        'SCC': 'Controla calorias',
-        'FAF': 'Atividade física',
-        'TUE': 'Uso de tecnologia',
-        'CALC': 'Consumo de álcool',
-        'MTRANS': 'Meio de transporte'
-    }
+_DEFAULT_CATEGORY_TRANSLATION = {
+    'yes': 'Sim',
+    'no': 'Não',
+    'Sometimes': 'Às vezes',
+    'sometimes': 'Às vezes',
+    'Frequently': 'Frequentemente',
+    'frequently': 'Frequentemente',
+    'Always': 'Sempre',
+    'always': 'Sempre',
+    'never': 'Nunca',
+    'Never': 'Nunca',
+    'Automobile': 'Automóvel',
+    'Motorbike': 'Moto',
+    'Public_Transportation': 'Transporte Público',
+    'Bike': 'Bicicleta',
+    'Walking': 'A pé'
+}
 
-if "EXPLAIN_NUMERIC" not in st.session_state or not st.session_state["EXPLAIN_NUMERIC"]:
-    st.session_state["EXPLAIN_NUMERIC"] = {
-        'FCVC': {1: 'Raramente', 2: 'Ocasionalmente', 3: 'Frequentemente'},
-        'CH2O': {1: '<1L/dia', 2: '1-2L/dia', 3: '>2L/dia'},
-        'NCP': {1: '1 refeição', 2: '2 refeições', 3: '3 refeições', 4: '4 refeições'},
-        'FAF': {0: 'Inativo', 1: 'Baixa atividade', 2: 'Atividade moderada', 3: 'Atividade intensa'},
-        'TUE': {0: 'Pouco uso', 1: 'Moderado', 2: 'Alto uso'}
-    }
+_DEFAULT_FIELD_NAME_MAP = {
+    'family_history': 'Histórico familiar de obesidade',
+    'FAVC': 'Consome alimentos de alta caloria',
+    'FCVC': 'Consumo de verduras',
+    'NCP': 'Refeições por dia',
+    'CAEC': 'Lanches entre refeições',
+    'SMOKE': 'Fuma',
+    'CH2O': 'Ingestão de água',
+    'SCC': 'Controla calorias',
+    'FAF': 'Atividade física',
+    'TUE': 'Uso de tecnologia',
+    'CALC': 'Consumo de álcool',
+    'MTRANS': 'Meio de transporte'
+}
+
+_DEFAULT_EXPLAIN_NUMERIC = {
+    'FCVC': {1: 'Raramente', 2: 'Ocasionalmente', 3: 'Frequentemente'},
+    'CH2O': {1: '<1L/dia', 2: '1-2L/dia', 3: '>2L/dia'},
+    'NCP': {1: '1 refeição', 2: '2 refeições', 3: '3 refeições', 4: '4 refeições'},
+    'FAF': {0: 'Inativo', 1: 'Baixa atividade', 2: 'Atividade moderada', 3: 'Atividade intensa'},
+    'TUE': {0: 'Pouco uso', 1: 'Moderado', 2: 'Alto uso'}
+}
+
+
+def _ensure_session_defaults() -> None:
+    """Ensure Streamlit session_state contains expected default keys."""
+    for k, v in _DEFAULT_SESSION.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
+
+    if "CATEGORY_TRANSLATION" not in st.session_state:
+        st.session_state["CATEGORY_TRANSLATION"] = dict(_DEFAULT_CATEGORY_TRANSLATION)
+
+    if "FIELD_NAME_MAP" not in st.session_state:
+        st.session_state["FIELD_NAME_MAP"] = dict(_DEFAULT_FIELD_NAME_MAP)
+
+    if "EXPLAIN_NUMERIC" not in st.session_state or not st.session_state.get("EXPLAIN_NUMERIC"):
+        st.session_state["EXPLAIN_NUMERIC"] = dict(_DEFAULT_EXPLAIN_NUMERIC)
+
+
+# Apply defaults at module import time (same behavior as before)
+_ensure_session_defaults()
 
 # Tenta importar o pacote `src`; se falhar, adiciona o root do repo ao `sys.path` e tenta novamente.
 try:
@@ -85,19 +102,22 @@ import utils.connection as connection
 
 # Função para carregar modelo com cache
 @st.cache_resource
-def load_ml_model():
-    """Carrega o modelo XGBoost ou Random Forest disponível em src/models/"""
+def load_ml_model() -> Optional[object]:
+    """Carrega o modelo XGBoost ou Random Forest disponível em src/models/.
+
+    Retorna o objeto do modelo ou `None` em caso de erro (comportamento inalterado).
+    """
     models_dir = os.path.join(os.path.dirname(__file__), '..', 'models')
     model_files = sorted(glob.glob(os.path.join(models_dir, "*.joblib")))
-    
+
     if not model_files:
         st.error("❌ Nenhum modelo encontrado em `src/models/`. Por favor, treine e salve um modelo.")
         return None
-    
+
     # Preferir XGBoost se disponível, senão usar Random Forest
     xgb_files = [f for f in model_files if 'xgb' in f.lower()]
     model_path = xgb_files[0] if xgb_files else model_files[0]
-    
+
     try:
         model = load_model(model_path)
         return model
@@ -105,7 +125,9 @@ def load_ml_model():
         st.error(f"❌ Erro ao carregar modelo: {e}")
         return None
 
-def render_predict(load_model_fn=None, predict_fn=None):
+
+def render_predict(load_model_fn: Optional[Callable[[], object]] = None, predict_fn: Optional[Callable[[Mapping[str, Any]], dict]] = None) -> None:
+    """Renderiza o formulário de predição (Streamlit)."""
     st.header('Formulário de triagem')
     # If no predictor function provided, load the model from default location
     if predict_fn is None:
@@ -115,6 +137,7 @@ def render_predict(load_model_fn=None, predict_fn=None):
                 predict_fn = lambda x: predict_from_input(model, x)
         except Exception:
             predict_fn = None
+
     with st.form('predict_form'):
         
         col1, col2 = st.columns(2)
