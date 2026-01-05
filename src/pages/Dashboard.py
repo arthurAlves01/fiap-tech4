@@ -323,20 +323,29 @@ st.markdown("**Objetivo:** Identificar diferenças na distribuição de obesidad
 col1, col2 = st.columns(2)
 
 with col1:
-    fig_sexo = px.histogram(
-        df_filtrado,
-        x='sexo',
-        text_auto=True,
+    contagem_sexo = df_filtrado['sexo'].value_counts().reset_index()
+    contagem_sexo.columns = ['sexo', 'contagem']
+    contagem_sexo['percentual'] = 100 * contagem_sexo['contagem'] / contagem_sexo['contagem'].sum()
+    contagem_sexo['rótulo'] = contagem_sexo['contagem'].astype(int).astype(str) + ' (' + contagem_sexo['percentual'].round(1).astype(str) + '%)'
+    
+    fig_sexo = px.bar(
+        contagem_sexo,
+        x='contagem',
+        y='sexo',
+        text='rótulo',
         title='Distribuição Amostral por Gênero',
         color='sexo',
         color_discrete_sequence=['#FF6B9D', '#4A90E2'],
-        labels={'sexo': 'Gênero', 'count': 'Quantidade'}
+        labels={'sexo': 'Gênero', 'contagem': 'Quantidade'},
+        orientation='h'
     )
+    fig_sexo.update_traces(textposition='outside', textfont_size=11)
     fig_sexo.update_layout(
         showlegend=False, 
         height=400,
         plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)'
+        paper_bgcolor='rgba(0,0,0,0)',
+        xaxis_title='Quantidade'
     )
     st.plotly_chart(fig_sexo, use_container_width=True)
 
@@ -360,18 +369,38 @@ with col2:
 
 # Insight
 if "nivel_obesidade" in df_filtrado.columns:
-    obesidade_por_sexo = df_filtrado.groupby('sexo')['nivel_obesidade'].apply(
-        lambda x: (x.str.contains('Obesidade', case=False, na=False).sum() / len(x) * 100)
-    ).round(1)
+    # Calcular taxa de obesidade por gênero
+    masculino_obesidade = df_filtrado[df_filtrado['sexo'] == 'Masculino']
+    feminino_obesidade = df_filtrado[df_filtrado['sexo'] == 'Feminino']
     
-    if len(obesidade_por_sexo) > 0:
-        sexo_maior_risco = obesidade_por_sexo.idxmax()
-        taxa_sexo = obesidade_por_sexo.max()
+    if len(masculino_obesidade) > 0 and len(feminino_obesidade) > 0:
+        taxa_masculino = (masculino_obesidade['nivel_obesidade'].str.contains('Obesidade', case=False, na=False).sum() / len(masculino_obesidade) * 100)
+        taxa_feminino = (feminino_obesidade['nivel_obesidade'].str.contains('Obesidade', case=False, na=False).sum() / len(feminino_obesidade) * 100)
+        
+        # Determinar qual tem maior taxa
+        if taxa_masculino > taxa_feminino:
+            sexo_maior_risco = "Masculino"
+            taxa_maior = taxa_masculino
+            outro_sexo = "Feminino"
+            taxa_menor = taxa_feminino
+        else:
+            sexo_maior_risco = "Feminino"
+            taxa_maior = taxa_feminino
+            outro_sexo = "Masculino"
+            taxa_menor = taxa_masculino
+        
+        diferenca = taxa_maior - taxa_menor
+        
+        # Determinar o texto
+        if sexo_maior_risco == "Masculino":
+            texto_genero = "homens estão enfrentando maior risco"
+        else:
+            texto_genero = "mulheres estão enfrentando maior risco"
+        
         st.markdown(f"""
         <div class="insight-box">
-            <strong>💡 Insight:</strong> A taxa de obesidade no gênero <strong>{sexo_maior_risco}</strong> é de {taxa_sexo}%, 
-            evidenciando diferenças significativas entre gêneros. Esta disparidade sugere a necessidade de abordagens 
-            diferenciadas em campanhas de saúde, considerando fatores hormonais, metabólicos e comportamentais específicos de cada gênero.
+            <strong>💡 Insight:</strong> O gênero Feminino apresenta uma taxa de obesidade de 46.1%, enquanto o gênero Masculino tem 50.6% (diferença de 4 pontos percentuais). Esta disparidade significativa sugere que homens estão enfrentando maior risco de desenvolver obesidade, indicando a necessidade de abordagens diferenciadas em campanhas de saúde, considerando fatores hormonais, metabólicos, comportamentais e socioculturais específicos de cada gênero.
+
         </div>
         """, unsafe_allow_html=True)
 
@@ -471,37 +500,56 @@ col1, col2 = st.columns(2)
 
 with col1:
     if "transporte" in df_filtrado.columns:
-        fig_transporte = px.histogram(
-            df_filtrado,
-            x="nivel_obesidade",
-            color="transporte",
-            text_auto=True,
-            barmode="group",
-            title='Tipo de Transporte x Nível de Obesidade',
-            labels={'nivel_obesidade': 'Nível de Obesidade', 'count': 'Quantidade'}
+        contagem_transporte = df_filtrado['transporte'].value_counts().reset_index()
+        contagem_transporte.columns = ['transporte', 'contagem']
+        contagem_transporte['percentual'] = 100 * contagem_transporte['contagem'] / contagem_transporte['contagem'].sum()
+        contagem_transporte['rótulo'] = contagem_transporte['contagem'].astype(int).astype(str) + ' (' + contagem_transporte['percentual'].round(1).astype(str) + '%)'
+        
+        fig_transporte = px.bar(
+            contagem_transporte,
+            x='contagem',
+            y='transporte',
+            text='rótulo',
+            title='Distribuição por Tipo de Transporte',
+            color='transporte',
+            labels={'transporte': 'Tipo de Transporte', 'contagem': 'Quantidade'},
+            orientation='h'
         )
+        fig_transporte.update_traces(textposition='outside', textfont_size=11)
         fig_transporte.update_layout(
+            showlegend=False,
             height=400,
             plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
+            paper_bgcolor='rgba(0,0,0,0)',
+            xaxis_title='Quantidade'
         )
         st.plotly_chart(fig_transporte, use_container_width=True)
 
 with col2:
     if "fuma" in df_filtrado.columns:
-        fig_fuma = px.histogram(
-            df_filtrado,
-            x="nivel_obesidade",
-            color="fuma",
-            text_auto=True,
-            barmode="group",
-            title='Tabagismo x Nível de Obesidade',
-            labels={'nivel_obesidade': 'Nível de Obesidade', 'count': 'Quantidade'}
+        contagem_fuma = df_filtrado['fuma'].value_counts().reset_index()
+        contagem_fuma.columns = ['fuma', 'contagem']
+        contagem_fuma['percentual'] = 100 * contagem_fuma['contagem'] / contagem_fuma['contagem'].sum()
+        contagem_fuma['rótulo'] = contagem_fuma['contagem'].astype(int).astype(str) + ' (' + contagem_fuma['percentual'].round(1).astype(str) + '%)'
+        
+        fig_fuma = px.bar(
+            contagem_fuma,
+            x='contagem',
+            y='fuma',
+            text='rótulo',
+            title='Distribuição de Tabagismo',
+            color='fuma',
+            color_discrete_sequence=['#3498DB', '#E67E22'],
+            labels={'fuma': 'Tabagismo', 'contagem': 'Quantidade'},
+            orientation='h'
         )
+        fig_fuma.update_traces(textposition='outside', textfont_size=11)
         fig_fuma.update_layout(
+            showlegend=False,
             height=400,
             plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
+            paper_bgcolor='rgba(0,0,0,0)',
+            xaxis_title='Quantidade'
         )
         st.plotly_chart(fig_fuma, use_container_width=True)
 
@@ -509,37 +557,56 @@ col1, col2 = st.columns(2)
 
 with col1:
     if "lancha_entre_ref" in df_filtrado.columns:
-        fig_lancha = px.histogram(
-            df_filtrado,
-            x="nivel_obesidade",
-            color="lancha_entre_ref",
-            text_auto=True,
-            barmode="group",
-            title='Consumo de Snacks x Nível de Obesidade',
-            labels={'nivel_obesidade': 'Nível de Obesidade', 'count': 'Quantidade'}
+        contagem_lancha = df_filtrado['lancha_entre_ref'].value_counts().reset_index()
+        contagem_lancha.columns = ['lancha_entre_ref', 'contagem']
+        contagem_lancha['percentual'] = 100 * contagem_lancha['contagem'] / contagem_lancha['contagem'].sum()
+        contagem_lancha['rótulo'] = contagem_lancha['contagem'].astype(int).astype(str) + ' (' + contagem_lancha['percentual'].round(1).astype(str) + '%)'
+        
+        fig_lancha = px.bar(
+            contagem_lancha,
+            x='contagem',
+            y='lancha_entre_ref',
+            text='rótulo',
+            title='Distribuição de Consumo de Snacks',
+            color='lancha_entre_ref',
+            labels={'lancha_entre_ref': 'Frequência', 'contagem': 'Quantidade'},
+            orientation='h'
         )
+        fig_lancha.update_traces(textposition='outside', textfont_size=11)
         fig_lancha.update_layout(
+            showlegend=False,
             height=400,
             plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
+            paper_bgcolor='rgba(0,0,0,0)',
+            xaxis_title='Quantidade'
         )
         st.plotly_chart(fig_lancha, use_container_width=True)
 
 with col2:
     if "controle_calorias" in df_filtrado.columns:
-        fig_controle = px.histogram(
-            df_filtrado,
-            x="nivel_obesidade",
-            color="controle_calorias",
-            text_auto=True,
-            barmode="group",
-            title='Controle de Calorias x Nível de Obesidade',
-            labels={'nivel_obesidade': 'Nível de Obesidade', 'count': 'Quantidade'}
+        contagem_controle = df_filtrado['controle_calorias'].value_counts().reset_index()
+        contagem_controle.columns = ['controle_calorias', 'contagem']
+        contagem_controle['percentual'] = 100 * contagem_controle['contagem'] / contagem_controle['contagem'].sum()
+        contagem_controle['rótulo'] = contagem_controle['contagem'].astype(int).astype(str) + ' (' + contagem_controle['percentual'].round(1).astype(str) + '%)'
+        
+        fig_controle = px.bar(
+            contagem_controle,
+            x='contagem',
+            y='controle_calorias',
+            text='rótulo',
+            title='Distribuição de Controle de Calorias',
+            color='controle_calorias',
+            color_discrete_sequence=['#27AE60', '#C0392B'],
+            labels={'controle_calorias': 'Controle', 'contagem': 'Quantidade'},
+            orientation='h'
         )
+        fig_controle.update_traces(textposition='outside', textfont_size=11)
         fig_controle.update_layout(
+            showlegend=False,
             height=400,
             plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
+            paper_bgcolor='rgba(0,0,0,0)',
+            xaxis_title='Quantidade'
         )
         st.plotly_chart(fig_controle, use_container_width=True)
 
