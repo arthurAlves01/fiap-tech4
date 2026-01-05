@@ -230,7 +230,7 @@ st.sidebar.markdown(f"**Última atualização:** {datetime.now().strftime('%d/%m
 # APLICAÇÃO DOS FILTROS
 # ============================================================
 def apply_filters(df, sexo_filter, idade_filter, obesidade_filter, familia_filter, 
-                  transporte_filter, fuma_filter, lancha_filter, controle_filter):
+                    transporte_filter, fuma_filter, lancha_filter, controle_filter):
     """Aplica todos os filtros selecionados"""
     df_filtrado = df.copy()
     
@@ -259,8 +259,9 @@ def apply_filters(df, sexo_filter, idade_filter, obesidade_filter, familia_filte
     
     return df_filtrado
 
+# Aplicar filtros e insere variável global criada acima e cria variável local
 df_filtrado = apply_filters(df, sexo_filter, idade_filter, obesidade_filter, familia_filter,
-                           transporte_filter, fuma_filter, lancha_filter, controle_filter)
+                        transporte_filter, fuma_filter, lancha_filter, controle_filter)
 
 # ============================================================
 # INDICADORES PRINCIPAIS (KPIs)
