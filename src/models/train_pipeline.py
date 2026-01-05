@@ -37,10 +37,10 @@ from sklearn.linear_model import LogisticRegression  # noqa: F401
 def _save_model(clf: Pipeline, model_name: str, save_type: str) -> None:
     """Salva o pipeline em disco usando joblib ou pickle (não faz nada se o tipo for inválido)."""
     if save_type == "joblib":
-        dump(clf, f"{model_name}.joblib")
+        dump(clf, f"..\src\models\{model_name}.joblib")
         print(f"\n✅ Modelo salvo em: {model_name}.joblib")
     else:
-        with open(f"{model_name}.pkl", 'wb') as f:
+        with open(f"..\src\models\{model_name}.pkl", 'wb') as f:
             pickle.dump(clf, f)
         print(f"\n✅ Modelo salvo em: {model_name}.pkl")
 

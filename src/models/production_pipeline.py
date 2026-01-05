@@ -3,8 +3,8 @@
 Este módulo fornece pequenos helpers usados pela aplicação e notebooks:
 - load_model: carrega um pipeline/modelo salvo (joblib ou pickle).
 - preprocess_input: converte um dicionário de entrada bruto nas
-  features esperadas pelo modelo treinado (preserva as mesmas transformações
-  utilizadas durante o treino).
+    features esperadas pelo modelo treinado (preserva as mesmas transformações
+    utilizadas durante o treino).
 
 Todas as alterações neste módulo são refatores para melhorar legibilidade e manutenção
 sem alterar o comportamento ou as entradas produzidas para o modelo.
