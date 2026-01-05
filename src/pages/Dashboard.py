@@ -199,7 +199,7 @@ st.write("---")
 st.header("🔢 Matriz de Correlação (Somente Variáveis Numéricas)")
 
 cols_drop = ['FAVC', 'family_history', 'CAEC', 'SMOKE', 'SCC', 'MTRANS',
-             'Gender', 'CALC', 'Obesity']
+                'Gender', 'CALC', 'Obesity']
 
 df_correl = df_filtered.drop(columns=[c for c in cols_drop if c in df_filtered.columns], errors='ignore')
 
@@ -213,15 +213,7 @@ if len(df_correl.columns) > 1:
 else:
     st.info("Poucas variáveis numéricas disponíveis após aplicar os filtros.")
 
-
-'''# Layout do Dash
-app.layout = html.Div(
-    style={'backgroundColor': 'white', 'minHeight': '100vh', 'padding': '20px'},
-    children=[
-        html.H1("Meu Dashboard", style={'color': '#111'}),
-        dcc.Graph(id='fig1', figure=fig)  # seu objeto fig
-    ]
-)'''
+# ============================================================
 
 st.write("---")
 st.subheader("Dataset Completo Filtrado")

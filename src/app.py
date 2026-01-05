@@ -14,6 +14,7 @@ from src.pages.Home import render_home
 from src.pages.Prever import render_predict
 from src.pages.Historico import render_historico
 from src.pages.Sobre import render_sobre
+from src.pages.Dashboard import render_dashboard
 
 st.set_page_config(page_title="App Principal - Obesidade", page_icon="🏥", layout="wide")
 
