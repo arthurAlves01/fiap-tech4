@@ -399,7 +399,7 @@ if "nivel_obesidade" in df_filtrado.columns:
         
         st.markdown(f"""
         <div class="insight-box">
-            <strong>💡 Insight:</strong> O gênero Feminino apresenta uma taxa de obesidade de 46.1%, enquanto o gênero Masculino tem 50.6% (diferença de 4 pontos percentuais). Esta disparidade significativa sugere que homens estão enfrentando maior risco de desenvolver obesidade, indicando a necessidade de abordagens diferenciadas em campanhas de saúde, considerando fatores hormonais, metabólicos, comportamentais e socioculturais específicos de cada gênero.
+            <strong>💡 Insight:</strong> Não ha diferença significatica entre a porcentagem de obesidade por genero, indicando que as ações podem ser aplicadas tanto para mulher quanto para homens levando em consideração sua saúde física. 
 
         </div>
         """, unsafe_allow_html=True)
