@@ -14,6 +14,7 @@ import re
 from typing import Any, Callable, Mapping, Optional
 
 import streamlit as st
+<<<<<<< HEAD
 
 # Defaults kept explicit to ensure the app runs as before
 _DEFAULT_SESSION = {
@@ -99,6 +100,14 @@ except ModuleNotFoundError:
 import utils.utils as utils
 import utils.plots as plots
 import utils.connection as connection
+=======
+from src.models.production_pipeline import predict_from_input, load_model
+import shared.utils as utils
+import shared.plots as plots
+import shared.connection as connection
+import base64
+import re
+>>>>>>> 6ef5725b88c105026ec44da32fd9ede12c957cac
 
 # Função para carregar modelo com cache
 @st.cache_resource
@@ -243,7 +252,10 @@ def render_predict(load_model_fn: Optional[Callable[[], object]] = None, predict
             st.success(f"🟢 Resultado: {previsao_binaria} — Risco {risco} de obesidade ({prob:.2f}%)")
 
         st.metric("Probabilidade (%)", f"{prob:.2f}%")
-        st.pyplot(plots.render_risk_chart(prob))
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.pyplot(plots.render_risk_chart(prob))
 
         st.subheader('Recomendações nutricionais')
         recs = utils.recommend_nutrition_profile(inputs)
@@ -253,7 +265,7 @@ def render_predict(load_model_fn: Optional[Callable[[], object]] = None, predict
         # salvar no DB se usuário autenticado (médico) ou se paciente quiser
         user_type = st.session_state.get('user_type', 'anon')
         user_name = st.session_state.get('user_name', 'anon')
-        connection.save_record(user_type, user_name, inputs, mensagem, prob)
+        connection.save_record(user_type, user_name, inputs, mensagem, prob, st.session_state.DB_PATH)
         st.info('Registro salvo no histórico.')
 
         # gerar PDF

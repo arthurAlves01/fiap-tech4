@@ -1,6 +1,6 @@
 """Página Home do app: apresentação e instruções rápidas."""
 import streamlit as st
-import utils.utils as utils
+import shared.utils as utils
 
 # Inicializa variáveis de configuração se não existirem
 if "HOSPITAL_NAME" not in st.session_state:
@@ -16,7 +16,7 @@ def render_home() -> None:
         **{st.session_state.get('HOSPITAL_NAME', 'Hospital Padrão')}** — Ferramenta de suporte para triagem e acompanhamento do risco de obesidade.
 
         Este sistema auxilia médicos e equipes multidisciplinares a identificar pacientes com maior risco
-de desenvolver obesidade, sugerindo ações nutricionais e gerando relatórios clínicos.
+        de desenvolver obesidade, sugerindo ações nutricionais e gerando relatórios clínicos.
         """
     )
     st.write('---')
