@@ -120,9 +120,20 @@ def load_ml_model() -> Optional[object]:
 
     try:
         model = load_model(model_path)
+        # Guardar o caminho do modelo carregado no estado da sessão para uso posterior
+        try:
+            st.session_state['loaded_model_path'] = os.path.basename(model_path)
+        except Exception:
+            # Não falhar caso session_state não esteja disponível por algum motivo
+            pass
         return model
     except Exception as e:
         st.error(f"❌ Erro ao carregar modelo: {e}")
+        # Garantir que não fica um caminho antigo em session_state
+        try:
+            st.session_state['loaded_model_path'] = None
+        except Exception:
+            pass
         return None
 
 
@@ -261,6 +272,66 @@ def render_predict(load_model_fn: Optional[Callable[[], object]] = None, predict
         b64 = base64.b64encode(pdf_bytes).decode()
         href = f'<a href="data:application/octet-stream;base64,{b64}" download="relatorio_{nome or "paciente"}.pdf">⬇️ Baixar relatório em PDF</a>'
         st.markdown(href, unsafe_allow_html=True)
+
+        # -----------------------------
+        # Mostrar modelo usado e métricas (accuracy, recall, f1)
+        # -----------------------------
+        # Tentar recuperar o nome do modelo carregado do session_state
+        model_file = st.session_state.get('loaded_model_path') if 'loaded_model_path' in st.session_state else None
+        if model_file is None:
+            # fallback: descobrir arquivo de modelo sem carregá-lo
+            models_dir = os.path.join(os.path.dirname(__file__), '..', 'models')
+            model_files = sorted(glob.glob(os.path.join(models_dir, "*.joblib")))
+            if model_files:
+                xgb_files = [f for f in model_files if 'xgb' in f.lower()]
+                model_file = os.path.basename(xgb_files[0] if xgb_files else model_files[0])
+
+        st.subheader('Métricas da Predição')
+        if model_file:
+            st.write(f"**Modelo usado:** `{model_file}`")
+        else:
+            st.write("**Modelo usado:** Nenhum modelo encontrado")
+
+        # Calcular métricas no conjunto de validação salvo (data/df_model_final.csv)
+        try:
+            import pandas as pd
+            from sklearn.metrics import accuracy_score, recall_score, f1_score
+
+            data_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'df_model_final.csv')
+            if not os.path.exists(data_path):
+                st.info('Arquivo de validação não encontrado: data/df_model_final.csv')
+            else:
+                df_val = pd.read_csv(data_path)
+                if 'target_obesidade' not in df_val.columns:
+                    st.info('Arquivo de validação não contém a coluna `target_obesidade`.')
+                else:
+                    X_val = df_val.drop(columns=['target_obesidade'])
+                    y_val = df_val['target_obesidade']
+
+                    model_obj = load_ml_model()
+                    if model_obj is None:
+                        st.info('Nenhum modelo carregado para calcular métricas.')
+                    else:
+                        try:
+                            y_pred = model_obj.predict(X_val)
+
+                            # Tentar métricas binárias; se falhar (por exemplo multiclasses), usar média ponderada
+                            try:
+                                recall = recall_score(y_val, y_pred)
+                                f1 = f1_score(y_val, y_pred)
+                            except Exception:
+                                recall = recall_score(y_val, y_pred, average='weighted')
+                                f1 = f1_score(y_val, y_pred, average='weighted')
+
+                            acc = accuracy_score(y_val, y_pred)
+
+                            st.write(f"- **Accuracy:** {acc:.2%}")
+                            st.write(f"- **Recall:** {recall:.2%}")
+                            st.write(f"- **F1-score:** {f1:.2%}")
+                        except Exception as e:
+                            st.error(f"Erro ao calcular métricas: {e}")
+        except Exception as e:
+            st.error(f"Erro ao preparar métricas: {e}")
 
 # Carregar modelo e chamar render_predict
 if __name__ == '__main__':
